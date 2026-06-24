@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>جوابك جوابهم - الخديعة أونلاين</title>
+    <style>
+        :root {
+            --bg-dark: #121214;
+            --primary-color: #ff9f43;
+            --card-bg: #1e1e24;
+            --white: #ffffff;
+            --btn-soccer: #2ed573;
+            --btn-youtube: #ff4757;
+            --btn-general: #1e90ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--white);
+            margin: 0;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+            position: relative;
+            padding-bottom: 60px;
+        }
+
+        header h1 {
+            font-size: 26px;
+            text-align: center;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        header span {
+            color: var(--primary-color);
+        }
+
+        .user-top-bar {
+            font-size: 14px;
+            color: #aaa;
+            margin-bottom: 20px;
+            text-align: center;
+            background: rgba(255,255,255,0.05);
+            padding: 5px 15px;
+            border-radius: 20px;
+            display: none;
+        }
+
+        .screen {
+            width: 100%;
+            max-width: 450px;
+            display: none;
+            flex-direction: column;
+            gap: 15px;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .screen.active {
+            display: flex;
+        }
+
+        /* شاشة الدخول */
+        .lobby-box {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            border: 1px solid #333;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* شاشة التصنيفات */
+        .category-btn {
+            padding: 22px;
+            font-size: 18px;
+            font-weight: bold;
+            border: none;
+            border-radius: 15px;
+            color: white;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+            transition: transform 0.2s;
+            text-align: center;
+        }
+
+        .category-btn:active { transform: scale(0.95); }
+        .btn-soccer { background-color: var(--btn-soccer); }
+        .btn-youtube { background-color: var(--btn-youtube); }
+        .btn-general { background-color: var(--btn-general); }
+        
+        .btn-add-question {
+            background-color: #57606f;
+            color: white;
+            padding: 15px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        /* صندوق السؤال */
+        .question-box {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            border: 2px solid var(--primary-color);
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+        }
+
+        /* حقول الإدخال */
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        input[type="text"], select, textarea {
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #333;
+            background-color: #222;
+            color: white;
+            font-size: 16px;
+            text-align: center;
+            outline: none;
+            font-family: inherit;
+        }
+
+        input[type="text"]:focus, select:focus, textarea:focus {
+            border-color: var(--primary-color);
+        }
+
+        .action-btn {
+            background-color: var(--primary-color);
+            color: black;
+            font-size: 18px;
+            font-weight: bold;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+
+        /* شاشة التصويت الخيارات */
+        .options-list {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .option-card {
+            background-color: var(--card-bg);
+            padding: 18px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            cursor: pointer;
+            border: 1px solid #333;
+            transition: all 0.2s;
+        }
+
+        .option-card:active {
+            background-color: var(--primary-color);
+            color: black;
+        }
+
+        /* الحقوق تحت يمين */
+        .credits {
+            position: fixed;
+            bottom: 10px;
+            right: 15px;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.4);
+            pointer-events: none;
+            direction: ltr;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>جوابك جوابهم <span>( خدعة )</span></h1>
+        <div class="user-top-bar" id="user-info-bar">اللاعب: <span id="top-username"></span> | الغرفة: <span id="top-room"></span></div>
+    </header>
+
+    <!-- 1. شاشة الدخول الرئيسية (إنشاء / دخول غرفة) -->
+    <div class="screen active" id="screen-auth">
+        <h3 style="text-align: center; color: #aaa;">مرحباً بك في تحدي الخديعة أونلاين</h3>
+        
+        <div class="lobby-box">
+            <h4 style="margin:0; text-align:center; color:var(--primary-color);">خيارات الغرفة</h4>
+            <input type="text" id="auth-username" placeholder="اكتب اسمك المستعار...">
+            <hr style="border: 0; border-top: 1px solid #333; width: 100%;">
+            <button class="action-btn" id="btn-create-room">👑 إنشاء غرفة جديدة</button>
+            <p style="text-align:center; margin: 5px 0; color:#aaa;">أو</p>
+            <input type="text" id="auth-room-code" placeholder="أدخل كود الغرفة الرباعي...">
+            <button class="action-btn" style="background-color:#1e90ff; color:white;" id="btn-join-room">🚪 دخول غرفة موجودة</button>
+        </div>
+    </div>
+
+    <!-- 2. شاشة اختيار التصنيف -->
+    <div class="screen" id="screen-categories">
+        <h3 style="text-align: center; color: #aaa;">اختر تصنيف التحدي للغرفة:</h3>
+        <button class="category-btn btn-soccer" id="btn-cat-soccer">⚽️ كورة</button>
+        <button class="category-btn btn-youtube" id="btn-cat-yt">🎬 يوتيوب</button>
+        <button class="category-btn btn-general" id="btn-cat-general">💡 أسئلة عامة</button>
+        
+        <button class="btn-add-question" id="btn-go-to-add">➕ إضافة سؤال جديد للعبة</button>
+    </div>
+
+    <!-- 3. شاشة إضافة سؤال جديد -->
+    <div class="screen" id="screen-add-q">
+        <h3 style="text-align: center; color: var(--primary-color);">إضافة سؤال من الذكاء الاصطناعي أو من عندك</h3>
+        <div class="input-group">
+            <label style="color: #aaa;">اختر تصنيف السؤال:</label>
+            <select id="new-q-category">
+                <option value="كورة">⚽️ كورة</option>
+                <option value="يوتيوب">🎬 يوتيوب</option>
+                <option value="أسئلة عامة">💡 أسئلة عامة</option>
+            </select>
+
+            <label style="color: #aaa;">اكتب السؤال والإجابة بصيغة (سؤال، إجابة):</label>
+            <textarea id="new-q-text" rows="3" placeholder="مثال: من هو الهداف التاريخي للمنتخب السعودي؟، ماجد عبد الله"></textarea>
+            
+            <button class="action-btn" id="btn-save-question">حفظ السؤال بنجاح</button>
+            <button class="btn-add-question" style="background-color: #333;" id="btn-back-to-cat">رجوع</button>
+        </div>
+    </div>
+
+    <!-- 4. شاشة كتابة الإجابة الخادعة -->
+    <div class="screen" id="screen-lie">
+        <div class="question-box" id="question-text-1">جاري تحميل السؤال من الغرفة...</div>
+        <div class="input-group">
+            <label style="text-align: center; color: #aaa;">اكتب إجابة كذابة ومقنعة لتخدع أخوياك:</label>
+            <input type="text" id="user-lie" placeholder="اكتب كذبتك هنا...">
+            <button class="action-btn" id="btn-submit-lie">إرسال الخديعة</button>
+        </div>
+    </div>
+
+    <!-- 5. شاشة التصويت -->
+    <div class="screen" id="screen-vote">
+        <div class="question-box" id="question-text-2">السؤال بيطلع هنا...</div>
+        <p style="text-align: center; color: #aaa;">قفط الإجابة الصح واحذر من كذبات أخوياك:</p>
+        <div class="options-list" id="options-container">
+            <!-- الخيارات المخلطة أونلاين تظهر هنا -->
+        </div>
+        <button class="btn-add-question" style="background-color: #c0392b;" id="btn-destroy-game">🔥 إنهاء وحرق الغرفة</button>
+    </div>
+
+    <!-- الحقوق -->
+    <div class="credits">Developed by Mostafa</div>
+
+    <!-- ربط الـ Firebase والمنطق البرمجي -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+        import { getDatabase, ref, set, push, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+
+        // إعدادات Firebase الخاصة بمشروعك بعد دمج الرابط الصحيح
+        const firebaseConfig = {
+            apiKey: "AIzaSyBzOcGpsO6go3VGPrsqljlxSMLhiqEQquw",
+            authDomain: "gwab-mstf.firebaseapp.com",
+            projectId: "gwab-mstf",
+            storageBucket: "gwab-mstf.firebasestorage.app",
+            messagingSenderId: "27994698021",
+            appId: "1:27994698021:web:89baf88279c7f28312aacc",
+            databaseURL: "https://gwab-mstf-default-rtdb.firebaseio.com/" // الرابط الصحيح الذي يطابق الـ Console الخاص بك
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+
+        let username = "";
+        let roomCode = "";
+        let isHost = false;
+        let currentQuestion = {};
+
+        const defaultQuestions = {
+            "كورة": [{ question: "من هو أكثر لاعب تسجيلاً للأهداف في تاريخ كرة القدم؟", realAnswer: "كريستيانو رونالدو" }],
+            "يوتيوب": [{ question: "ما هو أول مقطع فيديو تم رفعه على منصة يوتيوب؟", realAnswer: "أنا في حديقة الحيوان" }],
+            "أسئلة عامة": [{ question: "ما هو الكوكب الأكثر سخونة في مجموعتنا الشمسية؟", realAnswer: "الزهرة" }]
+        };
+
+        function switchScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+            if(username && roomCode) {
+                document.getElementById('user-info-bar').style.display = 'block';
+                document.getElementById('top-username').innerText = username;
+                document.getElementById('top-room').innerText = roomCode;
+            }
+        }
+
+        function generateRoomCode() {
+            const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            let code = "";
+            for (let i = 0; i < 4; i++) {
+                code += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return code;
+        }
+
+        // إنشاء غرفة جديدة
+        document.getElementById('btn-create-room').addEventListener('click', () => {
+            username = document.getElementById('auth-username').value.trim();
+            if (!username) return alert("الرجاء كتابة اسمك أولاً!");
+
+            roomCode = generateRoomCode();
+            isHost = true;
+
+            set(ref(db, 'rooms/' + roomCode), {
+                host: username,
+                status: "waiting",
+                question: "",
+                realAnswer: "",
+                lies: {},
+                timestamp: Date.now()
+            }).then(() => {
+                switchScreen('screen-categories');
+            }).catch(err => alert("حدث خطأ في إنشاء الغرفة: " + err.message));
+        });
+
+        // دخول غرفة موجودة
+        document.getElementById('btn-join-room').addEventListener('click', () => {
+            username = document.getElementById('auth-username').value.trim();
+            roomCode = document.getElementById('auth-room-code').value.trim().toUpperCase();
+
+            if (!username || !roomCode) return alert("تأكد من كتابة اسمك وكود الغرفة بشكل صحيح!");
+
+            get(child(ref(db), 'rooms/' + roomCode)).then((snapshot) => {
+                if (snapshot.exists()) {
+                    isHost = false;
+                    alert("تم الدخول للغرفة! انتظر المضيف ليختار التصنيف...");
+                    listenToRoomChanges();
+                } else {
+                    alert("كود الغرفة غير موجود أو تم حرقها!");
+                }
+            }).catch(err => alert("خطأ في الاتصال: " + err.message));
+        });
+
+        function listenToRoomChanges() {
+            onValue(ref(db, 'rooms/' + roomCode), (snapshot) => {
+                const data = snapshot.val();
+                if (!data) {
+                    alert("تم حرق الغرفة وإغلاق الجيم!");
+                    location.reload();
+                    return;
+                }
+
+                if (data.status === "playing" && data.question) {
+                    currentQuestion = { question: data.question, realAnswer: data.realAnswer };
+                    document.getElementById('question-text-1').innerText = data.question;
+                    document.getElementById('question-text-2').innerText = data.question;
+                    switchScreen('screen-lie');
+                }
+            });
+        }
+
+        function selectCategoryAndStart(cat) {
+            get(child(ref(db), 'custom_questions/' + cat)).then((snapshot) => {
+                let list = defaultQuestions[cat];
+                if (snapshot.exists()) {
+                    list = list.concat(Object.values(snapshot.val()));
+                }
+                const randomQ = list[Math.floor(Math.random() * list.length)];
+
+                set(ref(db, 'rooms/' + roomCode + '/question'), randomQ.question);
+                set(ref(db, 'rooms/' + roomCode + '/realAnswer'), randomQ.realAnswer);
+                set(ref(db, 'rooms/' + roomCode + '/status'), "playing").then(() => {
+                    listenToRoomChanges();
+                });
+            }).catch(() => {
+                // في حال عدم وجود أسئلة مضافة مسبقاً في السيرفر نعتمد المصفوفة المحلية
+                const list = defaultQuestions[cat];
+                const randomQ = list[Math.floor(Math.random() * list.length)];
+                set(ref(db, 'rooms/' + roomCode + '/question'), randomQ.question);
+                set(ref(db, 'rooms/' + roomCode + '/realAnswer'), randomQ.realAnswer);
+                set(ref(db, 'rooms/' + roomCode + '/status'), "playing").then(() => {
+                    listenToRoomChanges();
+                });
+            });
+        }
+
+        document.getElementById('btn-cat-soccer').addEventListener('click', () => selectCategoryAndStart('كورة'));
+        document.getElementById('btn-cat-yt').addEventListener('click', () => selectCategoryAndStart('يوتيوب'));
+        document.getElementById('btn-cat-general').addEventListener('click', () => selectCategoryAndStart('أسئلة عامة'));
+
+        // إرسال الإجابة الخادعة
+        document.getElementById('btn-submit-lie').addEventListener('click', () => {
+            const userLie = document.getElementById('user-lie').value.trim();
+            if (!userLie) return alert("اكتب أي كذبة أولاً!");
+
+            const roomLiesRef = ref(db, 'rooms/' + roomCode + '/lies');
+            const newLieRef = push(roomLiesRef);
+            set(newLieRef, userLie).then(() => {
+                const fakeLies = ["ميسي", "بيليه", userLie];
+                let allOptions = [currentQuestion.realAnswer, ...fakeLies];
+                allOptions = [...new Set(allOptions)];
+                allOptions.sort(() => Math.random() - 0.5);
+
+                const container = document.getElementById('options-container');
+                container.innerHTML = '';
+                allOptions.forEach(opt => {
+                    const card = document.createElement('div');
+                    card.className = 'option-card';
+                    card.innerText = opt;
+                    card.onclick = () => alert(`اخترت: ${opt}`);
+                    container.appendChild(card);
+                });
+
+                document.getElementById('user-lie').value = '';
+                switchScreen('screen-vote');
+            });
+        });
+
+        // حفظ سؤال جديد أونلاين
+        document.getElementById('btn-save-question').addEventListener('click', () => {
+            const cat = document.getElementById('new-q-category').value;
+            const textInput = document.getElementById('new-q-text').value.trim();
+
+            if (!textInput.includes('،') && !textInput.includes(',')) {
+                return alert("الرجاء كتابة السؤال ثم فاصلة (،) ثم الإجابة الحقيقية!");
+            }
+
+            const parts = textInput.includes('،') ? textInput.split('،') : textInput.split(',');
+            const questionText = parts[0].trim();
+            const answerText = parts[1].trim();
+
+            if (!questionText || !answerText) return alert("تأكد من كتابة السؤال والجواب بشكل صحيح.");
+
+            const globalQRef = ref(db, 'custom_questions/' + cat);
+            const newQ = push(globalQRef);
+            set(newQ, {
+                question: questionText,
+                realAnswer: answerText
+            }).then(() => {
+                alert(`تم حفظ السؤال أونلاين في تصنيف (${cat})!`);
+                document.getElementById('new-q-text').value = '';
+                switchScreen(isHost ? 'screen-categories' : 'screen-auth');
+            }).catch(err => alert("فشل الحفظ: " + err.message));
+        });
+
+        // إنهاء وحرق الغرفة
+        document.getElementById('btn-destroy-game').addEventListener('click', () => {
+            if(confirm("هل أنت متأكد من إنهاء اللعبة وحرق كود الغرفة؟")) {
+                remove(ref(db, 'rooms/' + roomCode)).then(() => {
+                    location.reload();
+                });
+            }
+        });
+
+        document.getElementById('btn-go-to-add').addEventListener('click', () => switchScreen('screen-add-q'));
+        document.getElementById('btn-back-to-cat').addEventListener('click', () => switchScreen('screen-categories'));
+    </script>
+</body>
+</html>
