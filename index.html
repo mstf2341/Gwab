@@ -243,7 +243,7 @@
 
         <div id="host-controls" style="display: none; flex-direction: column; gap: 12px; margin-top: 10px;">
             <h4 style="margin:0; text-align:center; color:var(--primary-color);">اختر التصنيف لبدء التحدي:</h4>
-            <button class="category-btn btn-soccer" id="btn-cat-soccer" disabled>⚽️ كورة (انتظار لاعب آخر على الأقل)</button>
+            <button class="category-btn btn-soccer" id="btn-cat-soccer" disabled>⚽️ كورة (انتظار لاعب آخر)</button>
             <button class="category-btn btn-youtube" id="btn-cat-yt" disabled>🎬 يوتيوب</button>
             <button class="category-btn btn-general" id="btn-cat-general" disabled>💡 أسئلة عامة</button>
         </div>
@@ -286,7 +286,7 @@
         <div class="question-box" id="question-text-2">السؤال...</div>
         <p style="text-align: center; color: #aaa;">قفط الإجابة الصح واحذر من كذبات أخوياك:</p>
         <div class="options-list" id="options-container">
-            <!-- الخيارات المخلطة (كذبات اللاعبين + الإجابة الصح) تظهر هنا لكل اللاعبين معاً -->
+            <!-- الخيارات تظهر هنا -->
         </div>
         <button class="btn-add-question" style="background-color: #c0392b; margin-top: 30px;" id="btn-destroy-game">🔥 إنهاء وحرق الغرفة</button>
     </div>
@@ -320,7 +320,7 @@
         const defaultQuestions = {
             "كورة": [{ question: "من هو أكثر لاعب تسجيلاً للأهداف في تاريخ كرة القدم؟", realAnswer: "كريستيانو رونالدو" }],
             "يوتيوب": [{ question: "ما هو أول مقطع فيديو تم رفعه على منصة يوتيوب؟", realAnswer: "أنا في حديقة الحيوان" }],
-            "أسئلة عامة": [{ question: "ما هو الكوكب الأكثر سخونة في مجموعتنا الشمسية? ", realAnswer: "الزهرة" }]
+            "أسئلة عامة": [{ question: "ما هو الكوكب الأكثر سخونة في مجموعتنا الشمسية؟", realAnswer: "الزهرة" }]
         };
 
         function switchScreen(screenId) {
@@ -365,7 +365,7 @@
             });
         });
 
-        // دخول غرفة موجودة
+        // دخول غرفة
         document.getElementById('btn-join-room').addEventListener('click', () => {
             username = document.getElementById('auth-username').value.trim();
             roomCode = document.getElementById('auth-room-code').value.trim().toUpperCase();
@@ -388,7 +388,7 @@
             });
         });
 
-        // مراقبة أحداث السيرفر أونلاين
+        // مراقبة السيرفر والمزامنة الفورية
         function listenToRoomChanges() {
             onValue(ref(db, 'rooms/' + roomCode), (snapshot) => {
                 const data = snapshot.val();
@@ -398,7 +398,7 @@
                     return;
                 }
 
-                // تحديث قائمة المتواجدين باللوحة
+                // تحديث قائمة اللاعبين
                 if (data.players) {
                     const playersContainer = document.getElementById('players-list-container');
                     playersContainer.innerHTML = "";
@@ -413,7 +413,7 @@
                         playersContainer.appendChild(tag);
                     });
 
-                    // التحكم في تفعيل أزرار البدء للهوست (من 2 إلى 4 لاعبين)
+                    // تفعيل وتعطيل أزرار الهوست حسب العدد
                     if (isHost) {
                         document.getElementById('host-controls').style.display = 'flex';
                         const canStart = totalPlayersCount >= 2 && totalPlayersCount <= 4;
@@ -429,38 +429,44 @@
                         document.getElementById('player-wait-msg').style.display = 'block';
                     }
 
-                    // التحقق مما إذا أرسل الجميع كذباتهم لفك الخيارات معاً
-                    if (data.status === "checking_lies") {
-                        let allSubmitted = true;
+                    // المنطق المحدث: الهوست هو المسؤول عن فحص اكتمال الكذبات لمنع التعليق
+                    if (isHost && data.status === "playing") {
+                        let liesCount = 0;
                         let liesArray = [];
                         keys.forEach(p => {
-                            if (!data.players[p].lie) allSubmitted = false;
-                            else liesArray.push(data.players[p].lie);
+                            if (data.players[p].lie) {
+                                liesCount++;
+                                liesArray.push(data.players[p].lie);
+                            }
                         });
 
-                        if (allSubmitted && data.realAnswer) {
-                            // دمج الكذبات مع الإجابة الصح الحقيقية
+                        // إذا أرسل جميع اللاعبين المتواجدين كذباتهم
+                        if (liesCount === totalPlayersCount && data.realAnswer) {
                             let allOptions = [data.realAnswer, ...liesArray];
-                            allOptions = [...new Set(allOptions)]; // منع التكرار
-                            allOptions.sort(() => Math.random() - 0.5); // خلط عشوائي
+                            allOptions = [...new Set(allOptions)]; // مسح التكرار
+                            allOptions.sort(() => Math.random() - 0.5); // خلط
 
-                            // تعميم الخيارات على السيرفر لفتحها لجميع الشاشات فورا
-                            if (isHost) {
-                                update(ref(db, 'rooms/' + roomCode), {
-                                    status: "voting",
-                                    finalOptions: allOptions
-                                });
-                            }
+                            update(ref(db, 'rooms/' + roomCode), {
+                                status: "voting",
+                                finalOptions: allOptions
+                            });
                         }
                     }
                 }
 
-                // التنقل التلقائي بين الشاشات بناءً على حالة السيرفر
+                // توجيه الشاشات حسب حالة السيرفر الموحدة
                 if (data.status === "playing" && data.question) {
                     currentQuestion = { question: data.question, realAnswer: data.realAnswer };
                     document.getElementById('question-text-1').innerText = data.question;
-                    document.getElementById('lie-input-area').style.display = 'flex';
-                    document.getElementById('lie-wait-msg').style.display = 'none';
+                    
+                    // لو اللاعب الحالي لسه ما أرسل كذبته يظهر له الإدخال، لو أرسل تظهر له شاشة الانتظار
+                    if (data.players[username] && data.players[username].lie) {
+                        document.getElementById('lie-input-area').style.display = 'none';
+                        document.getElementById('lie-wait-msg').style.display = 'block';
+                    } else {
+                        document.getElementById('lie-input-area').style.display = 'flex';
+                        document.getElementById('lie-wait-msg').style.display = 'none';
+                    }
                     switchScreen('screen-lie');
                 }
 
@@ -482,7 +488,9 @@
                             }
                             document.getElementById('top-score').innerText = myScore;
                             update(ref(db, `rooms/${roomCode}/players/${username}`), { score: myScore });
-                            card.style.pointerEvents = 'none';
+                            
+                            // تعطيل الضغط بعد الاختيار وتلوين الإجابة
+                            document.querySelectorAll('.option-card').forEach(c => c.style.pointerEvents = 'none');
                             card.style.backgroundColor = opt === currentQuestion.realAnswer ? '#2ed573' : '#ff4757';
                         };
                         container.appendChild(card);
@@ -492,7 +500,7 @@
             });
         }
 
-        // اختيار المضيف للتصنيف وبدء توزيع الجيم
+        // بدء الجيم وتصفير البيانات السابقة
         function selectCategoryAndStart(cat) {
             get(child(ref(db), 'custom_questions/' + cat)).then((snapshot) => {
                 let list = defaultQuestions[cat];
@@ -501,21 +509,21 @@
                 }
                 const randomQ = list[Math.floor(Math.random() * list.length)];
 
-                // تصفير الخدع السابقة وتعيين حالة السيرفر للبدء
-                update(ref(db, 'rooms/' + roomCode), {
-                    question: randomQ.question,
-                    realAnswer: randomQ.realAnswer,
-                    status: "playing"
-                }).then(() => {
-                    // مسح الكذبات القديمة لكل اللاعبين بالسيرفر
-                    get(child(ref(db), `rooms/${roomCode}/players`)).then((snap) => {
-                        if(snap.exists()){
-                            const pKeys = Object.keys(snap.val());
-                            pKeys.forEach(p => {
-                                update(ref(db, `rooms/${roomCode}/players/${p}`), { lie: "" });
-                            });
-                        }
-                    });
+                // جلب اللاعبين الحاليين لتصفير خانة الكذبة أولاً
+                get(child(ref(db), `rooms/${roomCode}/players`)).then((snap) => {
+                    if (snap.exists()) {
+                        const pKeys = Object.keys(snap.val());
+                        let updates = {};
+                        pKeys.forEach(p => {
+                            updates[`rooms/${roomCode}/players/${p}/lie`] = "";
+                        });
+                        updates[`rooms/${roomCode}/question`] = randomQ.question;
+                        updates[`rooms/${roomCode}/realAnswer`] = randomQ.realAnswer;
+                        updates[`rooms/${roomCode}/status`] = "playing";
+                        updates[`rooms/${roomCode}/finalOptions`] = null; // مسح خيارات القيم السابق
+
+                        update(ref(db), updates);
+                    }
                 });
             });
         }
@@ -524,23 +532,19 @@
         document.getElementById('btn-cat-yt').addEventListener('click', () => selectCategoryAndStart('يوتيوب'));
         document.getElementById('btn-cat-general').addEventListener('click', () => selectCategoryAndStart('أسئلة عامة'));
 
-        // إرسال الإجابة الكاذبة (انتظار جماعي)
+        // إرسال الكذبة
         document.getElementById('btn-submit-lie').addEventListener('click', () => {
             const userLie = document.getElementById('user-lie').value.trim();
             if (!userLie) return alert("اكتب كذبتك أولاً لتخدعهم!");
 
-            // رفع الكذبة الخاصة باللاعب وتحديث حالته
             update(ref(db, `rooms/${roomCode}/players/${username}`), { lie: userLie }).then(() => {
                 document.getElementById('user-lie').value = '';
                 document.getElementById('lie-input-area').style.display = 'none';
                 document.getElementById('lie-wait-msg').style.display = 'block';
-
-                // تغيير حالة الغرفة بالسيرفر لتبدأ عملية فحص وتجميع كذبات الكل
-                update(ref(db, 'rooms/' + roomCode), { status: "checking_lies" });
             });
         });
 
-        // إضافة سؤال جديد
+        // إضافة سؤال جديد أونلاين
         document.getElementById('btn-save-question').addEventListener('click', () => {
             const cat = document.getElementById('new-q-category').value;
             const textInput = document.getElementById('new-q-text').value.trim();
