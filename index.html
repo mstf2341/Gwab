@@ -50,6 +50,15 @@
             padding: 5px 15px;
             border-radius: 20px;
             display: none;
+            width: 100%;
+            max-width: 450px;
+            box-sizing: border-box;
+        }
+
+        .score-badge {
+            float: right;
+            color: #2ed573;
+            font-weight: bold;
         }
 
         .screen {
@@ -65,7 +74,6 @@
             display: flex;
         }
 
-        /* شاشة الدخول */
         .lobby-box {
             background-color: var(--card-bg);
             padding: 20px;
@@ -76,7 +84,15 @@
             gap: 12px;
         }
 
-        /* شاشة التصنيفات */
+        .player-tag {
+            background: rgba(255,255,255,0.1);
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: flex;
+            justify-content: space-between;
+        }
+
         .category-btn {
             padding: 22px;
             font-size: 18px;
@@ -107,7 +123,6 @@
             margin-top: 10px;
         }
 
-        /* صندوق السؤال */
         .question-box {
             background-color: var(--card-bg);
             padding: 20px;
@@ -119,7 +134,6 @@
             box-shadow: 0 4px 10px rgba(0,0,0,0.3);
         }
 
-        /* حقول الإدخال */
         .input-group {
             display: flex;
             flex-direction: column;
@@ -153,7 +167,12 @@
             cursor: pointer;
         }
 
-        /* شاشة التصويت الخيارات */
+        .action-btn:disabled {
+            background-color: #555;
+            color: #aaa;
+            cursor: not-allowed;
+        }
+
         .options-list {
             display: flex;
             flex-direction: column;
@@ -171,12 +190,10 @@
             transition: all 0.2s;
         }
 
-        .option-card:active {
-            background-color: var(--primary-color);
-            color: black;
+        .option-card:hover {
+            border-color: var(--primary-color);
         }
 
-        /* الحقوق تحت يمين */
         .credits {
             position: fixed;
             bottom: 10px;
@@ -197,13 +214,15 @@
 
     <header>
         <h1>جوابك جوابهم <span>( خدعة )</span></h1>
-        <div class="user-top-bar" id="user-info-bar">اللاعب: <span id="top-username"></span> | الغرفة: <span id="top-room"></span></div>
+        <div class="user-top-bar" id="user-info-bar">
+            <span class="score-badge">النقاط: <span id="top-score">0</span></span>
+            اللاعب: <span id="top-username"></span> | الغرفة: <span id="top-room"></span>
+        </div>
     </header>
 
-    <!-- 1. شاشة الدخول الرئيسية (إنشاء / دخول غرفة) -->
+    <!-- 1. شاشة الدخول الرئيسية -->
     <div class="screen active" id="screen-auth">
         <h3 style="text-align: center; color: #aaa;">مرحباً بك في تحدي الخديعة أونلاين</h3>
-        
         <div class="lobby-box">
             <h4 style="margin:0; text-align:center; color:var(--primary-color);">خيارات الغرفة</h4>
             <input type="text" id="auth-username" placeholder="اكتب اسمك المستعار...">
@@ -215,64 +234,69 @@
         </div>
     </div>
 
-    <!-- 2. شاشة اختيار التصنيف -->
-    <div class="screen" id="screen-categories">
-        <h3 style="text-align: center; color: #aaa;">اختر تصنيف التحدي للغرفة:</h3>
-        <button class="category-btn btn-soccer" id="btn-cat-soccer">⚽️ كورة</button>
-        <button class="category-btn btn-youtube" id="btn-cat-yt">🎬 يوتيوب</button>
-        <button class="category-btn btn-general" id="btn-cat-general">💡 أسئلة عامة</button>
+    <!-- 2. شاشة الانتظار في الغرفة واختيار التصنيف -->
+    <div class="screen" id="screen-lobby">
+        <h3 style="text-align: center; color: #aaa;">المتواجدون في الغرفة (<span id="player-count">0</span>/4):</h3>
+        <div class="lobby-box" id="players-list-container">
+            <!-- أسماء اللاعبين تظهر هنا فورا -->
+        </div>
+
+        <div id="host-controls" style="display: none; flex-direction: column; gap: 12px; margin-top: 10px;">
+            <h4 style="margin:0; text-align:center; color:var(--primary-color);">اختر التصنيف لبدء التحدي:</h4>
+            <button class="category-btn btn-soccer" id="btn-cat-soccer" disabled>⚽️ كورة (انتظار لاعب آخر على الأقل)</button>
+            <button class="category-btn btn-youtube" id="btn-cat-yt" disabled>🎬 يوتيوب</button>
+            <button class="category-btn btn-general" id="btn-cat-general" disabled>💡 أسئلة عامة</button>
+        </div>
         
+        <p id="player-wait-msg" style="text-align: center; color: #ff9f43; display: none;">بانتظار أن يبدأ الهوست اللعب...</p>
         <button class="btn-add-question" id="btn-go-to-add">➕ إضافة سؤال جديد للعبة</button>
     </div>
 
     <!-- 3. شاشة إضافة سؤال جديد -->
     <div class="screen" id="screen-add-q">
-        <h3 style="text-align: center; color: var(--primary-color);">إضافة سؤال من الذكاء الاصطناعي أو من عندك</h3>
+        <h3 style="text-align: center; color: var(--primary-color);">إضافة سؤال من عندك</h3>
         <div class="input-group">
-            <label style="color: #aaa;">اختر تصنيف السؤال:</label>
             <select id="new-q-category">
                 <option value="كورة">⚽️ كورة</option>
                 <option value="يوتيوب">🎬 يوتيوب</option>
                 <option value="أسئلة عامة">💡 أسئلة عامة</option>
             </select>
-
-            <label style="color: #aaa;">اكتب السؤال والإجابة بصيغة (سؤال، إجابة):</label>
             <textarea id="new-q-text" rows="3" placeholder="مثال: من هو الهداف التاريخي للمنتخب السعودي؟، ماجد عبد الله"></textarea>
-            
             <button class="action-btn" id="btn-save-question">حفظ السؤال بنجاح</button>
-            <button class="btn-add-question" style="background-color: #333;" id="btn-back-to-cat">رجوع</button>
+            <button class="btn-add-question" style="background-color: #333;" id="btn-back-to-lobby">رجوع</button>
         </div>
     </div>
 
     <!-- 4. شاشة كتابة الإجابة الخادعة -->
     <div class="screen" id="screen-lie">
-        <div class="question-box" id="question-text-1">جاري تحميل السؤال من الغرفة...</div>
-        <div class="input-group">
+        <div class="question-box" id="question-text-1">جاري تحميل السؤال...</div>
+        <div class="input-group" id="lie-input-area">
             <label style="text-align: center; color: #aaa;">اكتب إجابة كذابة ومقنعة لتخدع أخوياك:</label>
             <input type="text" id="user-lie" placeholder="اكتب كذبتك هنا...">
             <button class="action-btn" id="btn-submit-lie">إرسال الخديعة</button>
         </div>
+        <div id="lie-wait-msg" style="display: none; text-align: center; color: var(--primary-color);">
+            <h3>تم إرسال كذبتك بنجاح! 👍</h3>
+            <p>بانتظار بقية اللاعبين يرسلون كذباتهم لفتح الخيارات للكل...</p>
+        </div>
     </div>
 
-    <!-- 5. شاشة التصويت -->
+    <!-- 5. شاشة التصويت الجماعي الموحد -->
     <div class="screen" id="screen-vote">
-        <div class="question-box" id="question-text-2">السؤال بيطلع هنا...</div>
+        <div class="question-box" id="question-text-2">السؤال...</div>
         <p style="text-align: center; color: #aaa;">قفط الإجابة الصح واحذر من كذبات أخوياك:</p>
         <div class="options-list" id="options-container">
-            <!-- الخيارات المخلطة أونلاين تظهر هنا -->
+            <!-- الخيارات المخلطة (كذبات اللاعبين + الإجابة الصح) تظهر هنا لكل اللاعبين معاً -->
         </div>
-        <button class="btn-add-question" style="background-color: #c0392b;" id="btn-destroy-game">🔥 إنهاء وحرق الغرفة</button>
+        <button class="btn-add-question" style="background-color: #c0392b; margin-top: 30px;" id="btn-destroy-game">🔥 إنهاء وحرق الغرفة</button>
     </div>
 
-    <!-- الحقوق -->
     <div class="credits">Developed by Mostafa</div>
 
-    <!-- ربط الـ Firebase والمنطق البرمجي -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-        import { getDatabase, ref, set, push, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
+        import { getDatabase, ref, set, push, get, child, onValue, remove, update } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-database.js";
 
-        // إعدادات Firebase الخاصة بمشروعك بعد دمج الرابط الصحيح
         const firebaseConfig = {
             apiKey: "AIzaSyBzOcGpsO6go3VGPrsqljlxSMLhiqEQquw",
             authDomain: "gwab-mstf.firebaseapp.com",
@@ -280,7 +304,7 @@
             storageBucket: "gwab-mstf.firebasestorage.app",
             messagingSenderId: "27994698021",
             appId: "1:27994698021:web:89baf88279c7f28312aacc",
-            databaseURL: "https://gwab-mstf-default-rtdb.firebaseio.com/" // الرابط الصحيح الذي يطابق الـ Console الخاص بك
+            databaseURL: "https://gwab-mstf-default-rtdb.firebaseio.com/"
         };
 
         const app = initializeApp(firebaseConfig);
@@ -289,12 +313,14 @@
         let username = "";
         let roomCode = "";
         let isHost = false;
+        let myScore = 0;
+        let totalPlayersCount = 0;
         let currentQuestion = {};
 
         const defaultQuestions = {
             "كورة": [{ question: "من هو أكثر لاعب تسجيلاً للأهداف في تاريخ كرة القدم؟", realAnswer: "كريستيانو رونالدو" }],
             "يوتيوب": [{ question: "ما هو أول مقطع فيديو تم رفعه على منصة يوتيوب؟", realAnswer: "أنا في حديقة الحيوان" }],
-            "أسئلة عامة": [{ question: "ما هو الكوكب الأكثر سخونة في مجموعتنا الشمسية؟", realAnswer: "الزهرة" }]
+            "أسئلة عامة": [{ question: "ما هو الكوكب الأكثر سخونة في مجموعتنا الشمسية? ", realAnswer: "الزهرة" }]
         };
 
         function switchScreen(screenId) {
@@ -304,6 +330,7 @@
                 document.getElementById('user-info-bar').style.display = 'block';
                 document.getElementById('top-username').innerText = username;
                 document.getElementById('top-room').innerText = roomCode;
+                document.getElementById('top-score').innerText = myScore;
             }
         }
 
@@ -316,7 +343,7 @@
             return code;
         }
 
-        // إنشاء غرفة جديدة
+        // إنشاء غرفة
         document.getElementById('btn-create-room').addEventListener('click', () => {
             username = document.getElementById('auth-username').value.trim();
             if (!username) return alert("الرجاء كتابة اسمك أولاً!");
@@ -324,16 +351,18 @@
             roomCode = generateRoomCode();
             isHost = true;
 
-            set(ref(db, 'rooms/' + roomCode), {
+            const roomRef = ref(db, 'rooms/' + roomCode);
+            set(roomRef, {
                 host: username,
                 status: "waiting",
                 question: "",
                 realAnswer: "",
-                lies: {},
                 timestamp: Date.now()
             }).then(() => {
-                switchScreen('screen-categories');
-            }).catch(err => alert("حدث خطأ في إنشاء الغرفة: " + err.message));
+                set(ref(db, `rooms/${roomCode}/players/${username}`), { score: 0, lie: "" });
+                switchScreen('screen-lobby');
+                listenToRoomChanges();
+            });
         });
 
         // دخول غرفة موجودة
@@ -341,19 +370,25 @@
             username = document.getElementById('auth-username').value.trim();
             roomCode = document.getElementById('auth-room-code').value.trim().toUpperCase();
 
-            if (!username || !roomCode) return alert("تأكد من كتابة اسمك وكود الغرفة بشكل صحيح!");
+            if (!username || !roomCode) return alert("تأكد من كتابة اسمك وكود الغرفة!");
 
             get(child(ref(db), 'rooms/' + roomCode)).then((snapshot) => {
-                if (snapshot.exists()) {
-                    isHost = false;
-                    alert("تم الدخول للغرفة! انتظر المضيف ليختار التصنيف...");
+                if (!snapshot.exists()) return alert("كود الغرفة غير موجود!");
+                
+                const data = snapshot.val();
+                const currentPlayers = data.players ? Object.keys(data.players) : [];
+                
+                if (currentPlayers.length >= 4) return alert("العفو، الغرفة ممتلئة! (الحد الأقصى 4 لاعبين)");
+
+                isHost = false;
+                set(ref(db, `rooms/${roomCode}/players/${username}`), { score: 0, lie: "" }).then(() => {
+                    switchScreen('screen-lobby');
                     listenToRoomChanges();
-                } else {
-                    alert("كود الغرفة غير موجود أو تم حرقها!");
-                }
-            }).catch(err => alert("خطأ في الاتصال: " + err.message));
+                });
+            });
         });
 
+        // مراقبة أحداث السيرفر أونلاين
         function listenToRoomChanges() {
             onValue(ref(db, 'rooms/' + roomCode), (snapshot) => {
                 const data = snapshot.val();
@@ -363,15 +398,101 @@
                     return;
                 }
 
+                // تحديث قائمة المتواجدين باللوحة
+                if (data.players) {
+                    const playersContainer = document.getElementById('players-list-container');
+                    playersContainer.innerHTML = "";
+                    const keys = Object.keys(data.players);
+                    totalPlayersCount = keys.length;
+                    document.getElementById('player-count').innerText = totalPlayersCount;
+
+                    keys.forEach(p => {
+                        const tag = document.createElement('div');
+                        tag.className = 'player-tag';
+                        tag.innerHTML = `<span>👤 ${p} ${data.host === p ? '👑' : ''}</span> <span>${data.players[p].score} نقطة</span>`;
+                        playersContainer.appendChild(tag);
+                    });
+
+                    // التحكم في تفعيل أزرار البدء للهوست (من 2 إلى 4 لاعبين)
+                    if (isHost) {
+                        document.getElementById('host-controls').style.display = 'flex';
+                        const canStart = totalPlayersCount >= 2 && totalPlayersCount <= 4;
+                        document.querySelectorAll('.category-btn').forEach(btn => {
+                            btn.disabled = !canStart;
+                            if(canStart) {
+                                if(btn.id === 'btn-cat-soccer') btn.innerText = "⚽️ كورة";
+                                if(btn.id === 'btn-cat-yt') btn.innerText = "🎬 يوتيوب";
+                                if(btn.id === 'btn-cat-general') btn.innerText = "💡 أسئلة عامة";
+                            }
+                        });
+                    } else {
+                        document.getElementById('player-wait-msg').style.display = 'block';
+                    }
+
+                    // التحقق مما إذا أرسل الجميع كذباتهم لفك الخيارات معاً
+                    if (data.status === "checking_lies") {
+                        let allSubmitted = true;
+                        let liesArray = [];
+                        keys.forEach(p => {
+                            if (!data.players[p].lie) allSubmitted = false;
+                            else liesArray.push(data.players[p].lie);
+                        });
+
+                        if (allSubmitted && data.realAnswer) {
+                            // دمج الكذبات مع الإجابة الصح الحقيقية
+                            let allOptions = [data.realAnswer, ...liesArray];
+                            allOptions = [...new Set(allOptions)]; // منع التكرار
+                            allOptions.sort(() => Math.random() - 0.5); // خلط عشوائي
+
+                            // تعميم الخيارات على السيرفر لفتحها لجميع الشاشات فورا
+                            if (isHost) {
+                                update(ref(db, 'rooms/' + roomCode), {
+                                    status: "voting",
+                                    finalOptions: allOptions
+                                });
+                            }
+                        }
+                    }
+                }
+
+                // التنقل التلقائي بين الشاشات بناءً على حالة السيرفر
                 if (data.status === "playing" && data.question) {
                     currentQuestion = { question: data.question, realAnswer: data.realAnswer };
                     document.getElementById('question-text-1').innerText = data.question;
-                    document.getElementById('question-text-2').innerText = data.question;
+                    document.getElementById('lie-input-area').style.display = 'flex';
+                    document.getElementById('lie-wait-msg').style.display = 'none';
                     switchScreen('screen-lie');
+                }
+
+                if (data.status === "voting" && data.finalOptions) {
+                    document.getElementById('question-text-2').innerText = data.question;
+                    const container = document.getElementById('options-container');
+                    container.innerHTML = '';
+
+                    data.finalOptions.forEach(opt => {
+                        const card = document.createElement('div');
+                        card.className = 'option-card';
+                        card.innerText = opt;
+                        card.onclick = () => {
+                            if (opt === currentQuestion.realAnswer) {
+                                myScore += 10;
+                                alert("صححح! قفطت الإجابة الحقيقية وعليك 10 نقاط! 🎉");
+                            } else {
+                                alert(`خطيئة! اخترت خدعة أحد أخوياك (${opt}) 🤫`);
+                            }
+                            document.getElementById('top-score').innerText = myScore;
+                            update(ref(db, `rooms/${roomCode}/players/${username}`), { score: myScore });
+                            card.style.pointerEvents = 'none';
+                            card.style.backgroundColor = opt === currentQuestion.realAnswer ? '#2ed573' : '#ff4757';
+                        };
+                        container.appendChild(card);
+                    });
+                    switchScreen('screen-vote');
                 }
             });
         }
 
+        // اختيار المضيف للتصنيف وبدء توزيع الجيم
         function selectCategoryAndStart(cat) {
             get(child(ref(db), 'custom_questions/' + cat)).then((snapshot) => {
                 let list = defaultQuestions[cat];
@@ -380,19 +501,21 @@
                 }
                 const randomQ = list[Math.floor(Math.random() * list.length)];
 
-                set(ref(db, 'rooms/' + roomCode + '/question'), randomQ.question);
-                set(ref(db, 'rooms/' + roomCode + '/realAnswer'), randomQ.realAnswer);
-                set(ref(db, 'rooms/' + roomCode + '/status'), "playing").then(() => {
-                    listenToRoomChanges();
-                });
-            }).catch(() => {
-                // في حال عدم وجود أسئلة مضافة مسبقاً في السيرفر نعتمد المصفوفة المحلية
-                const list = defaultQuestions[cat];
-                const randomQ = list[Math.floor(Math.random() * list.length)];
-                set(ref(db, 'rooms/' + roomCode + '/question'), randomQ.question);
-                set(ref(db, 'rooms/' + roomCode + '/realAnswer'), randomQ.realAnswer);
-                set(ref(db, 'rooms/' + roomCode + '/status'), "playing").then(() => {
-                    listenToRoomChanges();
+                // تصفير الخدع السابقة وتعيين حالة السيرفر للبدء
+                update(ref(db, 'rooms/' + roomCode), {
+                    question: randomQ.question,
+                    realAnswer: randomQ.realAnswer,
+                    status: "playing"
+                }).then(() => {
+                    // مسح الكذبات القديمة لكل اللاعبين بالسيرفر
+                    get(child(ref(db), `rooms/${roomCode}/players`)).then((snap) => {
+                        if(snap.exists()){
+                            const pKeys = Object.keys(snap.val());
+                            pKeys.forEach(p => {
+                                update(ref(db, `rooms/${roomCode}/players/${p}`), { lie: "" });
+                            });
+                        }
+                    });
                 });
             });
         }
@@ -401,35 +524,23 @@
         document.getElementById('btn-cat-yt').addEventListener('click', () => selectCategoryAndStart('يوتيوب'));
         document.getElementById('btn-cat-general').addEventListener('click', () => selectCategoryAndStart('أسئلة عامة'));
 
-        // إرسال الإجابة الخادعة
+        // إرسال الإجابة الكاذبة (انتظار جماعي)
         document.getElementById('btn-submit-lie').addEventListener('click', () => {
             const userLie = document.getElementById('user-lie').value.trim();
-            if (!userLie) return alert("اكتب أي كذبة أولاً!");
+            if (!userLie) return alert("اكتب كذبتك أولاً لتخدعهم!");
 
-            const roomLiesRef = ref(db, 'rooms/' + roomCode + '/lies');
-            const newLieRef = push(roomLiesRef);
-            set(newLieRef, userLie).then(() => {
-                const fakeLies = ["ميسي", "بيليه", userLie];
-                let allOptions = [currentQuestion.realAnswer, ...fakeLies];
-                allOptions = [...new Set(allOptions)];
-                allOptions.sort(() => Math.random() - 0.5);
-
-                const container = document.getElementById('options-container');
-                container.innerHTML = '';
-                allOptions.forEach(opt => {
-                    const card = document.createElement('div');
-                    card.className = 'option-card';
-                    card.innerText = opt;
-                    card.onclick = () => alert(`اخترت: ${opt}`);
-                    container.appendChild(card);
-                });
-
+            // رفع الكذبة الخاصة باللاعب وتحديث حالته
+            update(ref(db, `rooms/${roomCode}/players/${username}`), { lie: userLie }).then(() => {
                 document.getElementById('user-lie').value = '';
-                switchScreen('screen-vote');
+                document.getElementById('lie-input-area').style.display = 'none';
+                document.getElementById('lie-wait-msg').style.display = 'block';
+
+                // تغيير حالة الغرفة بالسيرفر لتبدأ عملية فحص وتجميع كذبات الكل
+                update(ref(db, 'rooms/' + roomCode), { status: "checking_lies" });
             });
         });
 
-        // حفظ سؤال جديد أونلاين
+        // إضافة سؤال جديد
         document.getElementById('btn-save-question').addEventListener('click', () => {
             const cat = document.getElementById('new-q-category').value;
             const textInput = document.getElementById('new-q-text').value.trim();
@@ -442,23 +553,18 @@
             const questionText = parts[0].trim();
             const answerText = parts[1].trim();
 
-            if (!questionText || !answerText) return alert("تأكد من كتابة السؤال والجواب بشكل صحيح.");
-
             const globalQRef = ref(db, 'custom_questions/' + cat);
             const newQ = push(globalQRef);
-            set(newQ, {
-                question: questionText,
-                realAnswer: answerText
-            }).then(() => {
-                alert(`تم حفظ السؤال أونلاين في تصنيف (${cat})!`);
+            set(newQ, { question: questionText, realAnswer: answerText }).then(() => {
+                alert(`تم حفظ السؤال أونلاين بنجاح!`);
                 document.getElementById('new-q-text').value = '';
-                switchScreen(isHost ? 'screen-categories' : 'screen-auth');
-            }).catch(err => alert("فشل الحفظ: " + err.message));
+                switchScreen('screen-lobby');
+            });
         });
 
-        // إنهاء وحرق الغرفة
+        // حرق الغرفة
         document.getElementById('btn-destroy-game').addEventListener('click', () => {
-            if(confirm("هل أنت متأكد من إنهاء اللعبة وحرق كود الغرفة؟")) {
+            if(confirm("هل أنت متأكد من إنهاء اللعبة وحرق كود الغرفة بالكامل؟")) {
                 remove(ref(db, 'rooms/' + roomCode)).then(() => {
                     location.reload();
                 });
@@ -466,7 +572,7 @@
         });
 
         document.getElementById('btn-go-to-add').addEventListener('click', () => switchScreen('screen-add-q'));
-        document.getElementById('btn-back-to-cat').addEventListener('click', () => switchScreen('screen-categories'));
+        document.getElementById('btn-back-to-lobby').addEventListener('click', () => switchScreen('screen-lobby'));
     </script>
 </body>
 </html>
